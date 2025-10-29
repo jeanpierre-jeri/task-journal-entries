@@ -5,4 +5,6 @@ export interface TaskTableProps {
   onRunTask?: (taskId: string) => void;
   onDeleteTask?: (taskId: string) => void;
   onViewTask?: (taskId: string) => void;
+  onRunSelectedTasks?: (taskIds: string[]) => void;
+  isBulkActionLoading?: boolean;
 }

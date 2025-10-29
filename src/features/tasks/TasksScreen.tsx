@@ -15,6 +15,7 @@ import {
   useRunTaskMutation,
   useExecuteTaskMutation,
   useCreateTaskMutation,
+  useRunTasksBulkMutation,
   type CreateTaskInput,
 } from "./tasksApi";
 import TaskTableWrapper from "./components/TaskTableWrapper";
@@ -29,6 +30,8 @@ export function TasksScreen() {
   const [runTask] = useRunTaskMutation();
   const [deleteTask] = useDeleteTaskMutation();
   const [executeTask, { isLoading: isExecuting }] = useExecuteTaskMutation();
+  const [runTasksBulk, { isLoading: isBulkRunning }] =
+    useRunTasksBulkMutation();
   const [createTaskMutation, { isLoading: isCreatingTask }] =
     useCreateTaskMutation();
   const { data: journalEntries = [] } = useGetJournalEntriesQuery();
@@ -150,6 +153,17 @@ export function TasksScreen() {
     [setTaskSearchParam]
   );
 
+  const handleRunTasksBulk = useCallback(
+    async (taskIds: string[]) => {
+      try {
+        await runTasksBulk(taskIds).unwrap();
+      } catch (error) {
+        console.error("Failed to run tasks in bulk:", error);
+      }
+    },
+    [runTasksBulk]
+  );
+
   const handleExecuteTask = useCallback(async (taskId: string) => {
     try {
       await executeTask(taskId).unwrap();
@@ -199,6 +213,8 @@ export function TasksScreen() {
                     onDeleteTask={handleDeleteTask}
                     onRunTask={handleRunTask}
                     onViewTask={handleViewTask}
+                    onRunSelectedTasks={handleRunTasksBulk}
+                    isBulkActionLoading={isBulkRunning}
                   />
                 </ReflexElement>
 
@@ -246,6 +262,8 @@ export function TasksScreen() {
                 onDeleteTask={handleDeleteTask}
                 onRunTask={handleRunTask}
                 onViewTask={handleViewTask}
+                onRunSelectedTasks={handleRunTasksBulk}
+                isBulkActionLoading={isBulkRunning}
               />
             )}
           </div>

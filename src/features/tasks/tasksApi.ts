@@ -131,6 +131,110 @@ const createTaskFromPayload = ({
 
 let tasks: Task[] = [];
 
+type DispatchFn = (action: unknown) => void;
+
+const scheduleTaskProcessing = (taskId: string, dispatch: DispatchFn) => {
+  setTimeout(() => {
+    const currentTaskIndex = tasks.findIndex((t) => t.id === taskId);
+    if (currentTaskIndex === -1) return;
+
+    const currentTask = tasks[currentTaskIndex];
+
+    if (currentTask.type === TaskType.POST_JOURNAL_ENTRY) {
+      const taskWithAction: PostJournalEntryTask = {
+        ...currentTask,
+        proposedAction: cloneProposedJournalEntry(SAMPLE_PROPOSED_ENTRY),
+        status: TaskStatus.PENDING_ACTION,
+        lastRunAt: new Date().toISOString(),
+        lastRunError: undefined,
+      } as PostJournalEntryTask;
+
+      tasks = [
+        ...tasks.slice(0, currentTaskIndex),
+        taskWithAction,
+        ...tasks.slice(currentTaskIndex + 1),
+      ];
+    } else if (currentTask.type === TaskType.REVERSE_JOURNAL_ENTRY) {
+      const journalEntries = getJournalEntriesSnapshot();
+      const randomJournalEntryId =
+        selectRandomJournalEntryId(journalEntries);
+
+      if (!randomJournalEntryId) {
+        const failedTask: ReverseJournalEntryTask = {
+          ...currentTask,
+          status: TaskStatus.FAILED,
+          lastRunAt: new Date().toISOString(),
+          lastRunError: "No journal entries available to reverse.",
+          proposedAction: undefined,
+        } as ReverseJournalEntryTask;
+
+        tasks = [
+          ...tasks.slice(0, currentTaskIndex),
+          failedTask,
+          ...tasks.slice(currentTaskIndex + 1),
+        ];
+
+        dispatch(tasksApi.util.invalidateTags(["Task"]));
+        return;
+      }
+
+      const taskWithAction: ReverseJournalEntryTask = {
+        ...currentTask,
+        proposedAction: {
+          journalEntryId: randomJournalEntryId,
+        },
+        status: TaskStatus.PENDING_ACTION,
+        lastRunAt: new Date().toISOString(),
+        lastRunError: undefined,
+      } as ReverseJournalEntryTask;
+
+      tasks = [
+        ...tasks.slice(0, currentTaskIndex),
+        taskWithAction,
+        ...tasks.slice(currentTaskIndex + 1),
+      ];
+    } else {
+      const completedTask: Task = {
+        ...currentTask,
+        status: TaskStatus.COMPLETED,
+        lastRunAt: new Date().toISOString(),
+        lastRunError: undefined,
+      };
+
+      tasks = [
+        ...tasks.slice(0, currentTaskIndex),
+        completedTask,
+        ...tasks.slice(currentTaskIndex + 1),
+      ];
+    }
+
+    dispatch(tasksApi.util.invalidateTags(["Task"]));
+  }, 5000);
+};
+
+const beginTaskRun = (taskId: string, dispatch: DispatchFn): Task | null => {
+  const taskIndex = tasks.findIndex((t) => t.id === taskId);
+  if (taskIndex === -1) {
+    return null;
+  }
+
+  const task = tasks[taskIndex];
+  const updatedTask: Task = {
+    ...task,
+    status: TaskStatus.RUNNING,
+    lastRunError: undefined,
+  };
+
+  tasks = [
+    ...tasks.slice(0, taskIndex),
+    updatedTask,
+    ...tasks.slice(taskIndex + 1),
+  ];
+
+  scheduleTaskProcessing(taskId, dispatch);
+  return updatedTask;
+};
+
 export const tasksApi = createApi({
   reducerPath: "tasksApi",
   baseQuery: fakeBaseQuery(),
@@ -176,104 +280,51 @@ export const tasksApi = createApi({
 
     runTask: builder.mutation<Task, string>({
       queryFn: async (taskId, { dispatch }) => {
-        const taskIndex = tasks.findIndex((t) => t.id === taskId);
-        if (taskIndex === -1) {
+        const updatedTask = beginTaskRun(taskId, dispatch);
+        if (!updatedTask) {
           return { error: { status: 404, data: "Task not found" } };
         }
-
-        const task = tasks[taskIndex];
-        const updatedTask: Task = {
-          ...task,
-          status: TaskStatus.RUNNING,
-          lastRunError: undefined,
-        };
-        tasks = [
-          ...tasks.slice(0, taskIndex),
-          updatedTask,
-          ...tasks.slice(taskIndex + 1),
-        ];
-
-        setTimeout(async () => {
-          const currentTaskIndex = tasks.findIndex((t) => t.id === taskId);
-          if (currentTaskIndex === -1) return;
-
-          const currentTask = tasks[currentTaskIndex];
-
-          if (currentTask.type === TaskType.POST_JOURNAL_ENTRY) {
-            const taskWithAction: PostJournalEntryTask = {
-              ...currentTask,
-              proposedAction: cloneProposedJournalEntry(
-                SAMPLE_PROPOSED_ENTRY
-              ),
-              status: TaskStatus.PENDING_ACTION,
-              lastRunAt: new Date().toISOString(),
-              lastRunError: undefined,
-            } as PostJournalEntryTask;
-
-            tasks = [
-              ...tasks.slice(0, currentTaskIndex),
-              taskWithAction,
-              ...tasks.slice(currentTaskIndex + 1),
-            ];
-
-          } else if (currentTask.type === TaskType.REVERSE_JOURNAL_ENTRY) {
-            const journalEntries = getJournalEntriesSnapshot();
-            const randomJournalEntryId =
-              selectRandomJournalEntryId(journalEntries);
-
-            if (!randomJournalEntryId) {
-              const failedTask: ReverseJournalEntryTask = {
-                ...currentTask,
-                status: TaskStatus.FAILED,
-                lastRunAt: new Date().toISOString(),
-                lastRunError: "No journal entries available to reverse.",
-                proposedAction: undefined,
-              } as ReverseJournalEntryTask;
-
-              tasks = [
-                ...tasks.slice(0, currentTaskIndex),
-                failedTask,
-                ...tasks.slice(currentTaskIndex + 1),
-              ];
-
-              dispatch(tasksApi.util.invalidateTags(["Task"]));
-              return;
-            }
-
-            const taskWithAction: ReverseJournalEntryTask = {
-              ...currentTask,
-              proposedAction: {
-                journalEntryId: randomJournalEntryId,
-              },
-              status: TaskStatus.PENDING_ACTION,
-              lastRunAt: new Date().toISOString(),
-              lastRunError: undefined,
-            } as ReverseJournalEntryTask;
-
-            tasks = [
-              ...tasks.slice(0, currentTaskIndex),
-              taskWithAction,
-              ...tasks.slice(currentTaskIndex + 1),
-            ];
-          } else {
-            const completedTask: Task = {
-              ...currentTask,
-              status: TaskStatus.COMPLETED,
-              lastRunAt: new Date().toISOString(),
-              lastRunError: undefined,
-            };
-
-            tasks = [
-              ...tasks.slice(0, currentTaskIndex),
-              completedTask,
-              ...tasks.slice(currentTaskIndex + 1),
-            ];
-          }
-
-          dispatch(tasksApi.util.invalidateTags(["Task"]));
-        }, 5000);
-
         return { data: updatedTask };
+      },
+      invalidatesTags: ["Task"],
+    }),
+
+    runTasksBulk: builder.mutation<Task[], string[]>({
+      queryFn: async (taskIds, { dispatch }) => {
+        const uniqueIds = Array.from(new Set(taskIds));
+        if (uniqueIds.length === 0) {
+          return {
+            error: { status: 400, data: "No task ids provided." },
+          };
+        }
+
+        const updatedTasks: Task[] = [];
+        const missingTaskIds: string[] = [];
+
+        for (const id of uniqueIds) {
+          const updatedTask = beginTaskRun(id, dispatch);
+          if (updatedTask) {
+            updatedTasks.push(updatedTask);
+          } else {
+            missingTaskIds.push(id);
+          }
+        }
+
+        if (!updatedTasks.length) {
+          return {
+            error: { status: 404, data: "No matching tasks found." },
+          };
+        }
+
+        if (missingTaskIds.length > 0) {
+          console.warn(
+            `[tasksApi] runTasksBulk skipped missing tasks: ${missingTaskIds.join(
+              ", "
+            )}`
+          );
+        }
+
+        return { data: updatedTasks };
       },
       invalidatesTags: ["Task"],
     }),
@@ -408,6 +459,7 @@ export const {
   useGetTasksQuery,
   useCreateTaskMutation,
   useRunTaskMutation,
+  useRunTasksBulkMutation,
   useExecuteTaskMutation,
   useDeleteTaskMutation,
 } = tasksApi;

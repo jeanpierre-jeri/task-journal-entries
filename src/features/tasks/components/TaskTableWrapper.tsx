@@ -2,7 +2,14 @@ import { memo } from "react";
 import { TaskTable } from "./TaskTable";
 import type { TaskTableProps } from "../types";
 
-function TaskTableWrapper({ tasks, onDeleteTask, onRunTask, onViewTask }: TaskTableProps) {
+function TaskTableWrapper({
+  tasks,
+  onDeleteTask,
+  onRunTask,
+  onViewTask,
+  onRunSelectedTasks,
+  isBulkActionLoading,
+}: TaskTableProps) {
   return (
     <div className="flex h-full flex-col overflow-hidden pr-2">
       <div className="flex-1 overflow-auto">
@@ -12,6 +19,8 @@ function TaskTableWrapper({ tasks, onDeleteTask, onRunTask, onViewTask }: TaskTa
             onRunTask={onRunTask}
             onDeleteTask={onDeleteTask}
             onViewTask={onViewTask}
+            onRunSelectedTasks={onRunSelectedTasks}
+            isBulkActionLoading={isBulkActionLoading}
           />
         </div>
       </div>
