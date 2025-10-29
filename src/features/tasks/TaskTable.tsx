@@ -10,7 +10,7 @@ import {
   Button,
   Checkbox,
 } from "../../components/ui";
-import { TaskType, type Task } from "../../types";
+import { TaskType, TaskStatus, type Task } from "../../types";
 import type { Selection } from "react-aria-components";
 import type { TaskTableProps } from "./types";
 
@@ -27,7 +27,16 @@ export function TaskTable({
   const getStatusVariant = (
     status: Task["status"]
   ): "pending" | "running" | "completed" | "failed" => {
-    return status;
+    switch (status) {
+      case TaskStatus.RUNNING:
+        return "running";
+      case TaskStatus.COMPLETED:
+        return "completed";
+      case TaskStatus.FAILED:
+        return "failed";
+      default:
+        return "pending";
+    }
   };
 
   const getTypeLabel = (type: Task["type"]) => {
