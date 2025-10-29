@@ -129,7 +129,51 @@ const createTaskFromPayload = ({
   }
 };
 
+const TASKS_STORAGE_KEY = "tasks-journal-entries.tasks";
+
+const isStorageAvailable = () =>
+  typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+
+const readTasksFromStorage = (): Task[] | null => {
+  if (!isStorageAvailable()) {
+    return null;
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(TASKS_STORAGE_KEY);
+    if (!rawValue) {
+      return null;
+    }
+
+    const parsed = JSON.parse(rawValue);
+    return Array.isArray(parsed) ? (parsed as Task[]) : null;
+  } catch (error) {
+    console.warn("[tasksApi] Failed to read tasks from localStorage.", error);
+    return null;
+  }
+};
+
+const writeTasksToStorage = (nextTasks: Task[]) => {
+  if (!isStorageAvailable()) {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      TASKS_STORAGE_KEY,
+      JSON.stringify(nextTasks ?? [])
+    );
+  } catch (error) {
+    console.warn("[tasksApi] Failed to write tasks to localStorage.", error);
+  }
+};
+
 let tasks: Task[] = [];
+
+const setTasks = (nextTasks: Task[]) => {
+  tasks = nextTasks;
+  writeTasksToStorage(tasks);
+};
 
 type DispatchFn = (action: unknown) => void;
 
@@ -149,11 +193,11 @@ const scheduleTaskProcessing = (taskId: string, dispatch: DispatchFn) => {
         lastRunError: undefined,
       } as PostJournalEntryTask;
 
-      tasks = [
+      setTasks([
         ...tasks.slice(0, currentTaskIndex),
         taskWithAction,
         ...tasks.slice(currentTaskIndex + 1),
-      ];
+      ]);
     } else if (currentTask.type === TaskType.REVERSE_JOURNAL_ENTRY) {
       const journalEntries = getJournalEntriesSnapshot();
       const randomJournalEntryId =
@@ -168,11 +212,11 @@ const scheduleTaskProcessing = (taskId: string, dispatch: DispatchFn) => {
           proposedAction: undefined,
         } as ReverseJournalEntryTask;
 
-        tasks = [
+        setTasks([
           ...tasks.slice(0, currentTaskIndex),
           failedTask,
           ...tasks.slice(currentTaskIndex + 1),
-        ];
+        ]);
 
         dispatch(tasksApi.util.invalidateTags(["Task"]));
         return;
@@ -188,11 +232,11 @@ const scheduleTaskProcessing = (taskId: string, dispatch: DispatchFn) => {
         lastRunError: undefined,
       } as ReverseJournalEntryTask;
 
-      tasks = [
+      setTasks([
         ...tasks.slice(0, currentTaskIndex),
         taskWithAction,
         ...tasks.slice(currentTaskIndex + 1),
-      ];
+      ]);
     } else {
       const completedTask: Task = {
         ...currentTask,
@@ -201,11 +245,11 @@ const scheduleTaskProcessing = (taskId: string, dispatch: DispatchFn) => {
         lastRunError: undefined,
       };
 
-      tasks = [
+      setTasks([
         ...tasks.slice(0, currentTaskIndex),
         completedTask,
         ...tasks.slice(currentTaskIndex + 1),
-      ];
+      ]);
     }
 
     dispatch(tasksApi.util.invalidateTags(["Task"]));
@@ -225,11 +269,11 @@ const beginTaskRun = (taskId: string, dispatch: DispatchFn): Task | null => {
     lastRunError: undefined,
   };
 
-  tasks = [
+  setTasks([
     ...tasks.slice(0, taskIndex),
     updatedTask,
     ...tasks.slice(taskIndex + 1),
-  ];
+  ]);
 
   scheduleTaskProcessing(taskId, dispatch);
   return updatedTask;
@@ -271,7 +315,7 @@ export const tasksApi = createApi({
           type,
         });
 
-        tasks = [...tasks, newTask];
+        setTasks([...tasks, newTask]);
 
         return { data: newTask };
       },
@@ -398,11 +442,11 @@ export const tasksApi = createApi({
               lastRunError: "Journal entry not found for reversal.",
             };
 
-            tasks = [
+            setTasks([
               ...tasks.slice(0, taskIndex),
               failedTask,
               ...tasks.slice(taskIndex + 1),
-            ];
+            ]);
 
             dispatch(journalEntriesApi.util.invalidateTags(["JournalEntry"]));
             dispatch(tasksApi.util.invalidateTags(["Task"]));
@@ -427,11 +471,11 @@ export const tasksApi = createApi({
           };
         }
 
-        tasks = [
+        setTasks([
           ...tasks.slice(0, taskIndex),
           updatedTask,
           ...tasks.slice(taskIndex + 1),
-        ];
+        ]);
 
         dispatch(journalEntriesApi.util.invalidateTags(["JournalEntry"]));
         return { data: updatedTask };
@@ -443,7 +487,7 @@ export const tasksApi = createApi({
       queryFn: async (taskId) => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        tasks = tasks.filter((t) => t.id !== taskId);
+        setTasks(tasks.filter((t) => t.id !== taskId));
         return { data: undefined };
       },
       invalidatesTags: ["Task"],
@@ -452,7 +496,13 @@ export const tasksApi = createApi({
 });
 
 export const initializeTasks = (initialTasks: Task[]) => {
-  tasks = [...initialTasks];
+  const storedTasks = readTasksFromStorage();
+  if (storedTasks) {
+    tasks = storedTasks;
+    return;
+  }
+
+  setTasks([...initialTasks]);
 };
 
 export const {
