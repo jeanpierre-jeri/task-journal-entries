@@ -1,6 +1,6 @@
-import type { ProposedJournalEntry } from "../../types";
+import type { ProposedJournalEntry } from "../../../types";
 import { LineItemsTableSection } from "./LineItemsTableSection";
-import { formatDateTime } from "./utils";
+import { formatDateTime } from "../utils";
 
 interface ProposedJournalEntryDetailsProps {
   entry: ProposedJournalEntry;

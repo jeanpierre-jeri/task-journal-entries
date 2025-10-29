@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { TaskTable } from "./TaskTable";
-import type { TaskTableProps } from "./types";
+import type { TaskTableProps } from "../types";
 
 function TaskTableWrapper({ tasks, onDeleteTask, onRunTask, onViewTask }: TaskTableProps) {
   return (

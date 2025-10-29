@@ -9,10 +9,10 @@ import {
   Badge,
   Button,
   Checkbox,
-} from "../../components/ui";
-import { TaskType, TaskStatus, type Task } from "../../types";
+} from "../../../components/ui";
+import { TaskType, TaskStatus, type Task } from "../../../types";
 import type { Selection } from "react-aria-components";
-import type { TaskTableProps } from "./types";
+import type { TaskTableProps } from "../types";
 
 
 

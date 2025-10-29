@@ -1,6 +1,6 @@
-import type { JournalEntry } from "../../types";
+import type { JournalEntry } from "../../../types";
 import { LineItemsTableSection } from "./LineItemsTableSection";
-import { formatDateTime } from "./utils";
+import { formatDateTime } from "../utils";
 
 interface ReverseJournalEntryDetailsProps {
   journalEntryId: string;

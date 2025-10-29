@@ -1,2 +1,2 @@
 export * from "./TasksScreen";
-export * from "./TaskTable";
+export * from "./components/TaskTable";

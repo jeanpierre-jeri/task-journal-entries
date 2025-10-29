@@ -1,10 +1,10 @@
 import { useState } from "react";
-import type { CreateTaskInput } from "./tasksApi";
-import { type Task, TaskType } from "../../types";
+import type { CreateTaskInput } from "../tasksApi";
+import { type Task, TaskType } from "../../../types";
 import type { FormEvent } from "react";
 import type { Key } from "react-aria-components";
-import { Button, Label, Select, SelectItem, TextField } from "../../components/ui";
-import { TASK_TYPE_LABELS } from "./constants";
+import { Button, Label, Select, SelectItem, TextField } from "../../../components/ui";
+import { TASK_TYPE_LABELS } from "../constants";
 
 
 

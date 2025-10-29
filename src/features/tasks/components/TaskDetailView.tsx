@@ -1,9 +1,9 @@
-import { Button } from "../../components/ui";
-import { TaskStatus, TaskType, type JournalEntry, type PostJournalEntryTask, type ReverseJournalEntryTask, type Task } from "../../types";
-import { TASK_TYPE_LABELS } from "./constants";
+import { Button } from "../../../components/ui";
+import { TaskStatus, TaskType, type JournalEntry, type PostJournalEntryTask, type ReverseJournalEntryTask, type Task } from "../../../types";
+import { TASK_TYPE_LABELS } from "../constants";
 import { ProposedJournalEntryDetails } from "./ProposedJournalEntryDetails";
 import { ReverseJournalEntryDetails } from "./ReverseJournalEntryDetails";
-import { formatDateTime } from "./utils";
+import { formatDateTime } from "../utils";
 
 interface TaskDetailViewProps {
   task: Task;

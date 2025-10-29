@@ -16,10 +16,10 @@ import {
   useCreateTaskMutation,
   type CreateTaskInput,
 } from "./tasksApi";
-import TaskTableWrapper from "./TaskTableWrapper";
+import TaskTableWrapper from "./components/TaskTableWrapper";
 import { useGetJournalEntriesQuery } from "../../store/api/journalEntriesApi";
-import { CreateTaskPanel } from "./CreateTaskPanel";
-import { TaskDetailView } from "./TaskDetailView";
+import { CreateTaskPanel } from "./components/CreateTaskPanel";
+import { TaskDetailView } from "./components/TaskDetailView";
 import type { Task } from "../../types";
 
 
