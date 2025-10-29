@@ -12,13 +12,9 @@ import {
 } from "../../components/ui";
 import { TaskType, type Task } from "../../types";
 import type { Selection } from "react-aria-components";
+import type { TaskTableProps } from "./types";
 
-interface TaskTableProps {
-  tasks: Task[];
-  onRunTask?: (taskId: string) => void;
-  onDeleteTask?: (taskId: string) => void;
-  onViewTask?: (taskId: string) => void;
-}
+
 
 export function TaskTable({
   tasks,
