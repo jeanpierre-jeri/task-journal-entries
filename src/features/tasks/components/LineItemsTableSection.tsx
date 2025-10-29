@@ -1,6 +1,7 @@
 import { Badge, Cell, Column, Row, Table, TableBody, TableHeader } from "../../../components/ui";
+import { formatCurrency } from "../../../lib/utils";
 import type { ProposedJournalEntry } from "../../../types";
-import { computeLineItemTotals, formatCurrency } from "../utils";
+import { computeLineItemTotals } from "../utils";
 
 interface LineItemsTableSectionProps {
   lineItems: ProposedJournalEntry["lineItems"];

@@ -9,7 +9,8 @@ import {
   Button,
 } from "../../../components/ui";
 import type { JournalEntry } from "../../../types";
-import { formatCurrency, formatEntryDate } from "../formatters";
+import { formatEntryDate } from "../formatters";
+import { formatCurrency } from "../../../lib/utils";
 
 interface JournalEntriesTableProps {
   entries: JournalEntry[];

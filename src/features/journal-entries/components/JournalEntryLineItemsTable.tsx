@@ -6,8 +6,8 @@ import {
   Row,
   Cell,
 } from "../../../components/ui";
+import { formatCurrency } from "../../../lib/utils";
 import type { LineItem } from "../../../types";
-import { formatCurrency } from "../formatters";
 
 interface JournalEntryLineItemsTableProps {
   lineItems: LineItem[];
