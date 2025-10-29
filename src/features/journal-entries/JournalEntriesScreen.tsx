@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { ReflexContainer, ReflexElement, ReflexSplitter } from "react-reflex";
+import "react-reflex/styles.css";
 import { PageHeader, PageContent } from "../../components/layout";
 import { EmptyState } from "../../components/ui";
 import { useGetJournalEntriesQuery } from "../../store/api/journalEntriesApi";
-import { JournalEntryCard } from "./components/JournalEntryCard";
 import { JournalEntryDetailPanel } from "./components/JournalEntryDetailPanel";
+import JournalEntriesTableWrapper from "./components/JournalEntriesTableWrapper";
 
 export const JournalEntriesScreen = () => {
   const {
@@ -95,9 +97,10 @@ export const JournalEntriesScreen = () => {
   }, [setEntrySearchParam]);
 
   const showEmptyState = !isLoading && !isError && journalEntries.length === 0;
+  const isPanelOpen = Boolean(selectedEntry);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="flex h-full min-h-0 flex-col bg-white">
       <PageHeader
         title="Journal Entries"
         description="View and manage journal entries"
@@ -117,26 +120,27 @@ export const JournalEntriesScreen = () => {
             description="Journal entries will appear here when tasks are executed"
           />
         ) : (
-          <div className="flex h-full min-h-0 flex-col gap-6 lg:flex-row">
-            <div className="flex-1 min-h-0 overflow-auto p-2">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {journalEntries.map((entry) => (
-                  <JournalEntryCard
-                    key={entry.id}
-                    entry={entry}
-                    onSelect={handleSelectEntry}
-                    isSelected={selectedEntryId === entry.id}
+          <div className="flex-1 min-h-0">
+            {isPanelOpen ? (
+              <ReflexContainer orientation="vertical" className="h-full w-full min-w-0">
+                <ReflexElement className="left-pane min-w-0 bg-white" minSize={320}>
+                  <JournalEntriesTableWrapper
+                    entries={journalEntries}
+                    onViewEntry={handleSelectEntry}
                   />
-                ))}
-              </div>
-            </div>
-            {selectedEntry && (
-              <div className="w-full flex-shrink-0 lg:w-[28rem] p-2">
-                <JournalEntryDetailPanel
-                  entry={selectedEntry}
-                  onClose={handleCloseDetail}
-                />
-              </div>
+                </ReflexElement>
+
+                <ReflexSplitter className="bg-gray-200 cursor-col-resize" />
+
+                <ReflexElement className="right-pane min-w-0 bg-white" minSize={260}>
+                  <JournalEntryDetailPanel entry={selectedEntry!} onClose={handleCloseDetail} />
+                </ReflexElement>
+              </ReflexContainer>
+            ) : (
+              <JournalEntriesTableWrapper
+                entries={journalEntries}
+                onViewEntry={handleSelectEntry}
+              />
             )}
           </div>
         )}
