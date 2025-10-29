@@ -1,14 +1,55 @@
-import { Table, TableHeader, Column, TableBody, Row, Cell } from "../../../components/ui";
+import type { KeyboardEvent } from "react";
 import type { JournalEntry } from "../../../types";
-import { formatCurrency, formatEntryDate } from "../formatters";
+import { formatEntryDate } from "../formatters";
+import { JournalEntryLineItemsTable } from "./JournalEntryLineItemsTable";
 
 interface JournalEntryCardProps {
   entry: JournalEntry;
+  isSelected?: boolean;
+  onSelect?: (entryId: string) => void;
+  className?: string;
 }
 
-export const JournalEntryCard = ({ entry }: JournalEntryCardProps) => {
+export const JournalEntryCard = ({
+  entry,
+  isSelected = false,
+  onSelect,
+  className = "",
+}: JournalEntryCardProps) => {
+  const isInteractive = typeof onSelect === "function";
+
+  const handleSelect = () => {
+    onSelect?.(entry.id);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleSelect();
+    }
+  };
+
+  const baseClasses =
+    "flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm outline-none transition-shadow";
+  const interactiveClasses = isInteractive
+    ? "cursor-pointer hover:shadow-md focus-visible:ring-2 focus-visible:ring-black"
+    : "";
+  const selectedClasses = isSelected
+    ? "border-black shadow-md ring-2 ring-black"
+    : "";
+
   return (
-    <article className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+    <article
+      className={`${baseClasses} ${interactiveClasses} ${selectedClasses} ${className}`}
+      {...(isInteractive
+        ? {
+            role: "button",
+            tabIndex: 0,
+            onClick: handleSelect,
+            onKeyDown: handleKeyDown,
+          }
+        : {})}
+    >
       <header className="flex flex-col gap-1">
         <span className="text-lg font-semibold tracking-tight text-gray-900">
           {entry.entryNumber}
@@ -24,24 +65,7 @@ export const JournalEntryCard = ({ entry }: JournalEntryCardProps) => {
       </header>
 
       <div className="overflow-x-auto">
-        <Table aria-label={`Line items for ${entry.entryNumber}`}>
-          <TableHeader>
-            <Column>Account</Column>
-            <Column>Debit</Column>
-            <Column>Credit</Column>
-            <Column>Memo</Column>
-          </TableHeader>
-          <TableBody>
-            {entry.lineItems.map((lineItem) => (
-              <Row key={lineItem.id}>
-                <Cell>{lineItem.account}</Cell>
-                <Cell>{formatCurrency(lineItem.debit)}</Cell>
-                <Cell>{formatCurrency(lineItem.credit)}</Cell>
-                <Cell>{lineItem.memo ?? "—"}</Cell>
-              </Row>
-            ))}
-          </TableBody>
-        </Table>
+        <JournalEntryLineItemsTable lineItems={entry.lineItems} />
       </div>
     </article>
   );

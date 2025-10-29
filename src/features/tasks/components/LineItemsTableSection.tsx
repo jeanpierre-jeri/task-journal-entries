@@ -20,7 +20,7 @@ export function LineItemsTableSection({ lineItems }: LineItemsTableSectionProps)
     <div>
       <Table aria-label="Journal entry line items">
         <TableHeader>
-          <Column>Account</Column>
+          <Column isRowHeader>Account</Column>
           <Column>Debit</Column>
           <Column>Credit</Column>
           <Column>Memo</Column>

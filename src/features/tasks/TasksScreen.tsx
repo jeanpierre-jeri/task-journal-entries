@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ReflexContainer, ReflexElement, ReflexSplitter } from "react-reflex";
 import "react-reflex/styles.css";
 import { Close } from "flowbite-react-icons/outline";
@@ -7,6 +7,7 @@ import {
   Button,
   EmptyState,
 } from "../../components/ui";
+import { useSearchParams } from "react-router-dom";
 
 import {
   useDeleteTaskMutation,
@@ -21,18 +22,6 @@ import { useGetJournalEntriesQuery } from "../../store/api/journalEntriesApi";
 import { CreateTaskPanel } from "./components/CreateTaskPanel";
 import { TaskDetailView } from "./components/TaskDetailView";
 import type { Task } from "../../types";
-
-
-
-
-
-
-
-
-
-
-
-
 export function TasksScreen() {
   const { data: tasks = [], isLoading } = useGetTasksQuery(undefined, {
     pollingInterval: 1000,
@@ -43,14 +32,72 @@ export function TasksScreen() {
   const [createTaskMutation, { isLoading: isCreatingTask }] =
     useCreateTaskMutation();
   const { data: journalEntries = [] } = useGetJournalEntriesQuery();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isCreatePanelOpen, setIsCreatePanelOpen] = useState(false);
+  const taskIdFromUrl = searchParams.get("taskId");
 
   const selectedTask = useMemo(
     () => tasks.find((task) => task.id === selectedTaskId) ?? null,
     [tasks, selectedTaskId]
   );
   const isPanelOpen = Boolean(selectedTask) || isCreatePanelOpen;
+
+  const setTaskSearchParam = useCallback(
+    (taskId: string | null, options?: { replace?: boolean }) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (taskId) {
+            next.set("taskId", taskId);
+          } else {
+            next.delete("taskId");
+          }
+          return next;
+        },
+        { replace: options?.replace ?? true }
+      );
+    },
+    [setSearchParams]
+  );
+
+  useEffect(() => {
+    if (!tasks.length) {
+      return;
+    }
+
+    if (taskIdFromUrl) {
+      const match = tasks.find((task) => task.id === taskIdFromUrl);
+      if (match && selectedTaskId !== taskIdFromUrl) {
+        setSelectedTaskId(taskIdFromUrl);
+        setIsCreatePanelOpen(false);
+      } else if (!match && selectedTaskId) {
+        setSelectedTaskId(null);
+        setTaskSearchParam(null);
+      }
+    } else if (selectedTaskId && !isCreatePanelOpen) {
+      setSelectedTaskId(null);
+    }
+  }, [
+    taskIdFromUrl,
+    tasks,
+    selectedTaskId,
+    isCreatePanelOpen,
+    setTaskSearchParam,
+  ]);
+
+  useEffect(() => {
+    if (!selectedTaskId) {
+      return;
+    }
+
+    const stillExists = tasks.some((task) => task.id === selectedTaskId);
+
+    if (!stillExists) {
+      setSelectedTaskId(null);
+      setTaskSearchParam(null);
+    }
+  }, [tasks, selectedTaskId, setTaskSearchParam]);
 
   const handleRunTask = useCallback(async (taskId: string) => {
     try {
@@ -68,20 +115,26 @@ export function TasksScreen() {
     }
   }, [deleteTask])
 
-  const handleViewTask = useCallback((taskId: string) => {
-    setIsCreatePanelOpen(false);
-    setSelectedTaskId(taskId);
-  }, []);
+  const handleViewTask = useCallback(
+    (taskId: string) => {
+      setIsCreatePanelOpen(false);
+      setSelectedTaskId(taskId);
+      setTaskSearchParam(taskId);
+    },
+    [setTaskSearchParam]
+  );
 
   const handleClosePanel = useCallback(() => {
     setSelectedTaskId(null);
     setIsCreatePanelOpen(false);
-  }, []);
+    setTaskSearchParam(null);
+  }, [setTaskSearchParam]);
 
   const handleCreateTask = useCallback(() => {
     setSelectedTaskId(null);
     setIsCreatePanelOpen(true);
-  }, []);
+    setTaskSearchParam(null);
+  }, [setTaskSearchParam]);
 
   const handleCreateTaskSubmit = useCallback(
     (input: CreateTaskInput) => createTaskMutation(input).unwrap(),
@@ -92,8 +145,9 @@ export function TasksScreen() {
     (task: Task) => {
       setIsCreatePanelOpen(false);
       setSelectedTaskId(task.id);
+      setTaskSearchParam(task.id, { replace: false });
     },
-    []
+    [setTaskSearchParam]
   );
 
   const handleExecuteTask = useCallback(async (taskId: string) => {
@@ -206,15 +260,3 @@ export function TasksScreen() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
