@@ -16,6 +16,12 @@ import {
   removeJournalEntry,
 } from "../../store/api/journalEntriesApi";
 
+export interface CreateTaskInput {
+  title: string;
+  description?: string;
+  type: TaskType;
+}
+
 const cloneProposedJournalEntry = (
   entry: ProposedJournalEntry
 ): ProposedJournalEntry => ({
@@ -67,6 +73,62 @@ const selectRandomJournalEntryId = (entries: JournalEntry[]) => {
   return entries[randomIndex]?.id ?? null;
 };
 
+const generateTaskId = () => {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return `task-${crypto.randomUUID()}`;
+  }
+
+  return `task-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+};
+
+const createTaskFromPayload = ({
+  title,
+  description,
+  type,
+}: CreateTaskInput): Task => {
+  const id = generateTaskId();
+  const createdAt = new Date().toISOString();
+  const normalizedDescription = description ?? "";
+
+  const baseFields = {
+    id,
+    title,
+    description: normalizedDescription,
+    status: TaskStatus.PENDING_RUN,
+    createdAt,
+    lastRunAt: undefined,
+    lastRunError: undefined,
+  };
+
+  switch (type) {
+    case TaskType.POST_JOURNAL_ENTRY: {
+      const task: PostJournalEntryTask = {
+        ...baseFields,
+        type: TaskType.POST_JOURNAL_ENTRY,
+        proposedAction: undefined,
+      };
+      return task;
+    }
+    case TaskType.REVERSE_JOURNAL_ENTRY: {
+      const task: ReverseJournalEntryTask = {
+        ...baseFields,
+        type: TaskType.REVERSE_JOURNAL_ENTRY,
+        proposedAction: undefined,
+      };
+      return task;
+    }
+    case TaskType.OTHER:
+    default: {
+      const task: Task = {
+        ...baseFields,
+        type: TaskType.OTHER,
+        proposedAction: undefined,
+      };
+      return task;
+    }
+  }
+};
+
 let tasks: Task[] = [];
 
 export const tasksApi = createApi({
@@ -80,6 +142,36 @@ export const tasksApi = createApi({
         return { data: tasks };
       },
       providesTags: ["Task"],
+    }),
+
+    createTask: builder.mutation<Task, CreateTaskInput>({
+      queryFn: async ({ title, description, type }) => {
+        const trimmedTitle = title.trim();
+        if (!trimmedTitle) {
+          return {
+            error: {
+              status: 400,
+              data: "Title is required.",
+            },
+          };
+        }
+
+        const sanitizedDescription = description?.trim();
+
+        const newTask = createTaskFromPayload({
+          title: trimmedTitle,
+          description:
+            sanitizedDescription && sanitizedDescription.length > 0
+              ? sanitizedDescription
+              : undefined,
+          type,
+        });
+
+        tasks = [...tasks, newTask];
+
+        return { data: newTask };
+      },
+      invalidatesTags: ["Task"],
     }),
 
     runTask: builder.mutation<Task, string>({
@@ -314,6 +406,7 @@ export const initializeTasks = (initialTasks: Task[]) => {
 
 export const {
   useGetTasksQuery,
+  useCreateTaskMutation,
   useRunTaskMutation,
   useExecuteTaskMutation,
   useDeleteTaskMutation,
