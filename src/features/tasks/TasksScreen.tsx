@@ -4,13 +4,13 @@ import "react-reflex/styles.css";
 import { Close } from "flowbite-react-icons/outline";
 import { PageHeader, PageContent } from "../../components/layout";
 import { Button, EmptyState } from "../../components/ui";
+import type { Task } from "../../types";
 import { TaskTable } from "./TaskTable";
 import {
+  useDeleteTaskMutation,
   useGetTasksQuery,
   useRunTaskMutation,
-  useDeleteTaskMutation,
 } from "./tasksApi";
-import type { Task } from "../../types";
 
 export function TasksScreen() {
   const { data: tasks = [], isLoading } = useGetTasksQuery(undefined, {
@@ -61,7 +61,7 @@ export function TasksScreen() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="flex h-full min-h-0 flex-col bg-white">
       <PageHeader
         title="Tasks"
         description="Manage journal entry automation tasks"
@@ -76,77 +76,96 @@ export function TasksScreen() {
           </>
         }
       />
-      <PageContent>
+      <PageContent className="flex flex-col min-h-0 overflow-hidden">
         {tasks.length > 0 ? (
-          <ReflexContainer orientation="vertical">
-            <ReflexElement className="left-pane" minSize={400}>
-              <TaskTable
-                tasks={tasks}
-                onRunTask={handleRunTask}
-                onDeleteTask={handleDeleteTask}
-                onViewTask={handleViewTask}
-              />
-            </ReflexElement>
-
-            {selectedTask && (
-              <>
-                <ReflexSplitter />
-                <ReflexElement className="right-pane" minSize={300} flex={0.4}>
-                  <div className="h-full border-l border-gray-300 bg-white overflow-auto">
-                    <div className="p-4 border-b border-gray-300 flex items-center justify-between">
-                      <h2 className="text-lg font-semibold">Task Details</h2>
-                      <button
-                        onClick={handleClosePanel}
-                        className="p-1 hover:bg-gray-100 rounded transition-colors"
-                      >
-                        <Close className="w-5 h-5" />
-                      </button>
-                    </div>
-                    <div className="p-4">
-                      <h3 className="text-base font-semibold mb-2">
-                        {selectedTask.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-4">
-                        {selectedTask.description}
-                      </p>
-                      <div className="space-y-2 text-sm">
-                        <div>
-                          <span className="font-medium">Status: </span>
-                          <span>{selectedTask.status}</span>
-                        </div>
-                        <div>
-                          <span className="font-medium">Type: </span>
-                          <span>{selectedTask.type}</span>
-                        </div>
-                        <div>
-                          <span className="font-medium">Created: </span>
-                          <span>
-                            {new Date(selectedTask.createdAt).toLocaleString()}
-                          </span>
-                        </div>
-                        {selectedTask.lastRunAt && (
-                          <div>
-                            <span className="font-medium">Last Run: </span>
-                            <span>
-                              {new Date(
-                                selectedTask.lastRunAt
-                              ).toLocaleString()}
-                            </span>
-                          </div>
-                        )}
-                        {selectedTask.lastRunError && (
-                          <div className="text-red-600">
-                            <span className="font-medium">Error: </span>
-                            <span>{selectedTask.lastRunError}</span>
-                          </div>
-                        )}
-                      </div>
+          <div className="flex-1 min-h-0">
+            <ReflexContainer
+              orientation="vertical"
+              className="h-full w-full min-w-0"
+            >
+              <ReflexElement className="left-pane min-w-0 bg-white" minSize={320}>
+                <div className="flex h-full flex-col overflow-hidden pr-2">
+                  <div className="flex-1 overflow-auto">
+                    <div className="min-w-[48rem]">
+                      <TaskTable
+                        tasks={tasks}
+                        onRunTask={handleRunTask}
+                        onDeleteTask={handleDeleteTask}
+                        onViewTask={handleViewTask}
+                      />
                     </div>
                   </div>
-                </ReflexElement>
-              </>
-            )}
-          </ReflexContainer>
+                </div>
+              </ReflexElement>
+
+
+
+              <ReflexSplitter className="bg-gray-200 cursor-col-resize" />
+
+              <ReflexElement
+                className="right-pane min-w-0 bg-white"
+                minSize={260}
+              >
+                <div className="flex h-full flex-col border-l border-gray-300 bg-white">
+                  {selectedTask ? (
+                    <>
+                      <div className="flex items-center justify-between border-b border-gray-300 px-4 py-3">
+                        <h2 className="text-lg font-semibold">Task Details</h2>
+                        <button
+                          onClick={handleClosePanel}
+                          className="rounded p-1 transition-colors hover:bg-gray-100"
+                        >
+                          <Close className="h-5 w-5" />
+                        </button>
+                      </div>
+                      <div className="flex-1 overflow-auto p-4">
+                        <h3 className="mb-2 text-base font-semibold">
+                          {selectedTask.title}
+                        </h3>
+                        <p className="mb-4 text-sm text-gray-600">
+                          {selectedTask.description}
+                        </p>
+                        <div className="space-y-2 text-sm">
+                          <div>
+                            <span className="font-medium">Status: </span>
+                            <span>{selectedTask.status}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium">Type: </span>
+                            <span>{selectedTask.type}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium">Created: </span>
+                            <span>
+                              {new Date(selectedTask.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          {selectedTask.lastRunAt && (
+                            <div>
+                              <span className="font-medium">Last Run: </span>
+                              <span>
+                                {new Date(selectedTask.lastRunAt).toLocaleString()}
+                              </span>
+                            </div>
+                          )}
+                          {selectedTask.lastRunError && (
+                            <div className="text-red-600">
+                              <span className="font-medium">Error: </span>
+                              <span>{selectedTask.lastRunError}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-1 items-center justify-center px-4 text-center text-sm text-gray-500">
+                      Select a task to view its details.
+                    </div>
+                  )}
+                </div>
+              </ReflexElement>
+            </ReflexContainer>
+          </div>
         ) : (
           <EmptyState
             title="No tasks found"
