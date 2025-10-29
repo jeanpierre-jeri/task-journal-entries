@@ -1,6 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
-import { tasksApi, initializeTasks } from "../features/tasks/tasksApi";
+import { tasksApi, initializeTasks } from "./api/tasksApi";
 import { INITIAL_TASKS } from "../features/tasks/mockData";
 import type { Task, JournalEntry } from "../types";
 import {

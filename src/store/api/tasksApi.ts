@@ -8,13 +8,13 @@ import {
   type ProposedJournalEntry,
   type JournalEntry,
 } from "../../types";
-import { SAMPLE_PROPOSED_ENTRY } from "./mockData";
+import { SAMPLE_PROPOSED_ENTRY } from "../../features/tasks/mockData";
 import {
   addJournalEntry,
   getJournalEntriesSnapshot,
   journalEntriesApi,
   removeJournalEntry,
-} from "../../store/api/journalEntriesApi";
+} from "./journalEntriesApi";
 
 export interface CreateTaskInput {
   title: string;

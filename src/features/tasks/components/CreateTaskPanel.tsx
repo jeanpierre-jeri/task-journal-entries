@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { CreateTaskInput } from "../tasksApi";
+import type { CreateTaskInput } from "../../../store/api/tasksApi";
 import { type Task, TaskType } from "../../../types";
 import type { FormEvent } from "react";
 import type { Key } from "react-aria-components";

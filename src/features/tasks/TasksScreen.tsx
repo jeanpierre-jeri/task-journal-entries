@@ -17,7 +17,7 @@ import {
   useCreateTaskMutation,
   useRunTasksBulkMutation,
   type CreateTaskInput,
-} from "./tasksApi";
+} from "../../store/api/tasksApi";
 import TaskTableWrapper from "./components/TaskTableWrapper";
 import { useGetJournalEntriesQuery } from "../../store/api/journalEntriesApi";
 import { CreateTaskPanel } from "./components/CreateTaskPanel";
