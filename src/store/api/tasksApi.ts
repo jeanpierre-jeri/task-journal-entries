@@ -8,7 +8,7 @@ import {
   type ProposedJournalEntry,
   type JournalEntry,
 } from "../../types";
-import { SAMPLE_PROPOSED_ENTRY } from "../../features/tasks/mockData";
+import { generateRandomJournalEntry } from "../../features/tasks/mockData";
 import {
   addJournalEntry,
   getJournalEntriesSnapshot,
@@ -185,9 +185,10 @@ const scheduleTaskProcessing = (taskId: string, dispatch: DispatchFn) => {
     const currentTask = tasks[currentTaskIndex];
 
     if (currentTask.type === TaskType.POST_JOURNAL_ENTRY) {
+      const proposedEntry = generateRandomJournalEntry();
       const taskWithAction: PostJournalEntryTask = {
         ...currentTask,
-        proposedAction: cloneProposedJournalEntry(SAMPLE_PROPOSED_ENTRY),
+        proposedAction: cloneProposedJournalEntry(proposedEntry),
         status: TaskStatus.PENDING_ACTION,
         lastRunAt: new Date().toISOString(),
         lastRunError: undefined,
