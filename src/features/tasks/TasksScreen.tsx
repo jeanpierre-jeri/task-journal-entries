@@ -36,9 +36,8 @@ export function TasksScreen() {
     useCreateTaskMutation();
   const { data: journalEntries = [] } = useGetJournalEntriesQuery();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isCreatePanelOpen, setIsCreatePanelOpen] = useState(false);
-  const taskIdFromUrl = searchParams.get("taskId");
+  const selectedTaskId = searchParams.get("taskId");
 
   const selectedTask = useMemo(
     () => tasks.find((task) => task.id === selectedTaskId) ?? null,
@@ -65,39 +64,21 @@ export function TasksScreen() {
   );
 
   useEffect(() => {
-    if (!tasks.length) {
+    if (!selectedTaskId) {
       return;
     }
 
-    if (taskIdFromUrl) {
-      const match = tasks.find((task) => task.id === taskIdFromUrl);
-      if (match && selectedTaskId !== taskIdFromUrl) {
-        setSelectedTaskId(taskIdFromUrl);
-        setIsCreatePanelOpen(false);
-      } else if (!match && selectedTaskId) {
-        setSelectedTaskId(null);
-        setTaskSearchParam(null);
-      }
-    } else if (selectedTaskId && !isCreatePanelOpen) {
-      setSelectedTaskId(null);
-    }
-  }, [
-    taskIdFromUrl,
-    tasks,
-    selectedTaskId,
-    isCreatePanelOpen,
-    setTaskSearchParam,
-  ]);
+    setIsCreatePanelOpen(false);
+  }, [selectedTaskId]);
 
   useEffect(() => {
-    if (!selectedTaskId) {
+    if (!selectedTaskId || !tasks.length) {
       return;
     }
 
     const stillExists = tasks.some((task) => task.id === selectedTaskId);
 
     if (!stillExists) {
-      setSelectedTaskId(null);
       setTaskSearchParam(null);
     }
   }, [tasks, selectedTaskId, setTaskSearchParam]);
@@ -121,20 +102,17 @@ export function TasksScreen() {
   const handleViewTask = useCallback(
     (taskId: string) => {
       setIsCreatePanelOpen(false);
-      setSelectedTaskId(taskId);
       setTaskSearchParam(taskId);
     },
     [setTaskSearchParam]
   );
 
   const handleClosePanel = useCallback(() => {
-    setSelectedTaskId(null);
     setIsCreatePanelOpen(false);
     setTaskSearchParam(null);
   }, [setTaskSearchParam]);
 
   const handleCreateTask = useCallback(() => {
-    setSelectedTaskId(null);
     setIsCreatePanelOpen(true);
     setTaskSearchParam(null);
   }, [setTaskSearchParam]);
@@ -147,7 +125,6 @@ export function TasksScreen() {
   const handleCreateTaskSuccess = useCallback(
     (task: Task) => {
       setIsCreatePanelOpen(false);
-      setSelectedTaskId(task.id);
       setTaskSearchParam(task.id, { replace: false });
     },
     [setTaskSearchParam]
