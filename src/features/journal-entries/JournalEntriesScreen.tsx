@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ReflexContainer, ReflexElement, ReflexSplitter } from "react-reflex";
 import "react-reflex/styles.css";
@@ -15,8 +15,7 @@ export const JournalEntriesScreen = () => {
     isError,
   } = useGetJournalEntriesQuery();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
-  const entryIdFromUrl = searchParams.get("entryId");
+  const selectedEntryId = searchParams.get("entryId");
 
   const selectedEntry = useMemo(
     () => journalEntries.find((entry) => entry.id === selectedEntryId) ?? null,
@@ -42,42 +41,12 @@ export const JournalEntriesScreen = () => {
   );
 
   useEffect(() => {
-    if (!journalEntries.length) {
+    if (!selectedEntryId || selectedEntry) {
       return;
     }
 
-    if (entryIdFromUrl) {
-      const match = journalEntries.find((entry) => entry.id === entryIdFromUrl);
-      if (match && selectedEntryId !== entryIdFromUrl) {
-        setSelectedEntryId(entryIdFromUrl);
-      } else if (!match && selectedEntryId) {
-        setSelectedEntryId(null);
-        setEntrySearchParam(null);
-      }
-    } else if (selectedEntryId) {
-      setSelectedEntryId(null);
-    }
-  }, [
-    entryIdFromUrl,
-    journalEntries,
-    selectedEntryId,
-    setEntrySearchParam,
-  ]);
-
-  useEffect(() => {
-    if (!selectedEntryId) {
-      return;
-    }
-
-    const stillExists = journalEntries.some(
-      (entry) => entry.id === selectedEntryId
-    );
-
-    if (!stillExists) {
-      setSelectedEntryId(null);
-      setEntrySearchParam(null);
-    }
-  }, [journalEntries, selectedEntryId, setEntrySearchParam]);
+    setEntrySearchParam(null);
+  }, [selectedEntryId, selectedEntry, setEntrySearchParam]);
 
   const handleSelectEntry = useCallback(
     (entryId: string) => {
@@ -85,14 +54,12 @@ export const JournalEntriesScreen = () => {
         return;
       }
 
-      setSelectedEntryId(entryId);
       setEntrySearchParam(entryId);
     },
     [selectedEntryId, setEntrySearchParam]
   );
 
   const handleCloseDetail = useCallback(() => {
-    setSelectedEntryId(null);
     setEntrySearchParam(null);
   }, [setEntrySearchParam]);
 
